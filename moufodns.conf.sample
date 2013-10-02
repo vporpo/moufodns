@@ -1,0 +1,52 @@
+# Sample MoufoDNS configuration file
+
+# General configuration
+[config]
+listen port:53
+listen host:
+log delimiter:,
+filter level:none
+#filter level:whitelist-domains
+ip when not found:0.0.0.0
+logfile: log_sample
+#verbose level:2
+
+
+# This section does the mapping of individual domain names to IP addresses.
+# The domain names listed here are the first ones checked to match.
+# In this example, if a DNS request is made for "some.override", moufodns
+# will reply with the ip address 10.140.1.2.
+[overrides]
+some.override: 10.140.1.2
+
+
+# Upon a Regular Expression (RE) match, act as a DNS proxy by redirecting the 
+# DNS request to one of the specified ip:ports where some other DNS server runs.
+# In this example, all *.pwmn requests are forwarded to the DNS on 10.140.1.3
+# and all *.mswn requests are forwarded to the DNS running on 10.140.1.4.
+[proxy RE]
+.*\.pwmn:10.140.1.3|53
+.*\.mswn:10.140.1.4|53
+
+
+# This section uses Regular Expressions (RE) to map a group of domains
+# to an IP address.
+# If none of the overrides match, then these REs are tried out.
+# In this example, any request that does not match "some.override" or any of 
+# the [proxy RE] domains, will map to 10.140.1.1
+[overrides RE]
+# Default, matches everything.
+.*:10.140.1.1
+
+
+# Logging filters. 
+# There 3 kinds of fliters:
+# Whitelist domains: these are the domains allowed to show up in log
+# Blacklist names  : Ban these specific names from showing up in log.
+# Whitelist names  : Allow these names to show up in log.
+# Only one can be active. This is defined in [config] filter level.
+[log filters]
+whitelist domains: pwmn
+#blacklist names: unwanted.domain1, unwanted.domain2
+#whitelist names: white1.domain.name, white2.domain.name
+

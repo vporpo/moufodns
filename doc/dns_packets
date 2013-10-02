@@ -1,0 +1,199 @@
+More about the DNS packet format:
+http://www.faqs.org/rfcs/rfc1035.html the RFC1035
+http://www.tcpipguide.com/free/t_DNSMessageProcessingandGeneralMessageFormat.htm
+
+
+DNS packet
+
++-------------------+
+| Header (12 bytes) |
++-------------------+
+| Question (var)    |
++-------------------+
+| Answer (var)      |
++-------------------+
+| Authority (var)   |
++-------------------+
+| Additional (var)  |
++-------------------+
+
+HEADER: 12 bytes
+
+0       16       32              16 17       21 22 23 24 25     28       32
++--------+--------+    flags      +--+--------+--+--+--+--+------+--------+
+|  ID    |  flags | ------------> |qr| opcode |AA|TC|RD|RA| zero |  RCode |
++--------+--------+               +--+--------+--+--+--+--+------+--------+
+| Q cnt  |ANS cnt |     
++--------+--------+     
+| NS cnt | AR cnt | --> Q   Count: #QUESTIONS in the QUESTION section          
++--------+--------+     ANS Count: #RESOURCE RECORDS in the ANSWER section     
+                        NS  Count: #RESOURCE RECORDS in the AUTHORITY section 
+                        AR  Count: #RESOURCE RECORDS in the ADDITIONAL section
+
+
+      respcode (RCode):  Value   Code
+                           0    No Error
+                           1    Format Error 
+                           2    Server Failure
+                           3    Name Error
+                           4    Not Implemented
+                           5    Refused
+                           6    YX Domain
+                           7    YX RR set
+                           8    NX RR set
+                           9    Not Auth
+                          10    Not Zone
+
+
+QUESTION:
+
+0       16       32
++--------+--------+
+|                 |
+=    Question     = (var)
+|                 |
++--------+--------+            Value   RR code   RR Type
+| QType  | QClass | --> QType:     1 :    A    :  Address
++--------+--------+                2 :   NS    : Name Server
+                                   5 :  CNAME  : Cannonical Name
+                                   6 :   SOA   : Start Of Authority
+                                  12 :   PTR   : Pointer
+                                  15 :   MX    : Mail Exchange
+                                  16 :   TXT   : Text String
+
+ANSWER:offset +12, AUTHORITY, ADDITIONAL contain zero or more resource records.
+
+COMMON RESOURCE RECORD:
+
+0       16       32
++--------+--------+
+|                 |
+=       Name      = (var)
+|                 |
++--------+--------+
+|  Type  | Class  |
++--------+--------+
+|       TTL       |
++--------+--------+
+|RDATALen|        | 
++--------+        |
+|                 |
+=      RDATA      = (var)
+| (A, NS, CNAME)  |
++-----------------+ 
+
+RDATA for COMMON RESOURCE RECORD types: (based on QType)
+
+A (QType 1)
+
+0       16       32
++--------+--------+
+|     Address     |
++-----------------+
+
+NS (QType 2)
+
+0       16       32
++--------+--------+
+=     NSDName     = (var)
++-----------------+
+
+
+CNAME (QType 5)
+
+0       16       32
++--------+--------+
+=      CName      = (var)
++-----------------+
+
+
+SOA RESOURCE RECORD: (QType 6)
+
+0       16       32
++--------+--------+
+|                 |
+=       Name      = (var)
+|                 |
++--------+--------+
+|  Type  | Class  |
++--------+--------+
+|       TTL       |
++--------+--------+
+|RDATALen|        | 
++--------+        |
+=   Master Name   = (var)
++-----------------+ 
+= Responsible Name= (var)
++-----------------+ 
+| Serial Number   |
++-----------------+ 
+| Refresh Interval|
++-----------------+ 
+|  Retry Interval |
++-----------------+ 
+| Expire Interval |
++-----------------+ 
+| Neg. Caching TTL|
++-----------------+ 
+
+
+PTR RESOURCE RECORD: (reverse resolution) (QType 12)
+
+0       16       32
++--------+--------+
+=    PTRDName     = (var)
++-----------------+ 
+
+
+MAIL EXCHANGE RESOURCE RECORD: (QType 15)
+
+0      16       32
++-------+--------+
+| pref  |        |
++-------+        |
+=    EXCHANGE    = (var)
++----------------+
+
+
+TXT RESOURCE RECORD: (reverse resolution) (QType 16)
+
+0       16       32
++--------+--------+
+=    TXT-Data     = (var)
++-----------------+ 
+
+
+
+DNS standard Variable Name Notation
+
+1. Uncompressed:
+
+0      8           sz1+8  sz1+16                   end-8    end
++------+------||-----+------+------||-----+--- ... --+------+
+| size1|    name1    | size2|    name2    |    ...   |   0  |
++------+------||-----+------+------||-----+--- ... --+------+
+
+size <= 63 ( 0011 1111b)
+             11
+            reserved for compressed.
+
+
+2. Compressed:
+
+ Packet      offset
++--------+      -
+| Header |      |
++--------+      |  ---------+
+|  ...   |      |           |
+|        |      |           |
+|  Name  | <==  -           |
+                            |
+                            |
+                            |
+0  2       8           16   |
++--+-------+-----------+    |
+|11|      offset       | ---+
++--+-------+-----------+
+
+
+
